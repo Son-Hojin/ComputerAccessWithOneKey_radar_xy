@@ -1,0 +1,6 @@
+/build
+/dist
+/rotate_scan.spec
+/venv
+/xy_scan.spec
+/__pycache__
