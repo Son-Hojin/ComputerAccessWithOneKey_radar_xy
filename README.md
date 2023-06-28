@@ -1,4 +1,4 @@
-# MouseControlWithOneKey_radar_xy
+# ComputerAccessWithOneKey_radar_xy
 
 Python version: 3.8.10<br>
 그 외 라이브러리 버전은 requirements.txt 파일에 있습니다.
