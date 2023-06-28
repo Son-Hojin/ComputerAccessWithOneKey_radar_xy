@@ -19,6 +19,7 @@ app_name = "mouse_support_rotate"
 
 click_type = 1 # 1은 단일 클릭, 2은 더블 클릭 
 
+#xy_scan은 rotate_scan 코드를 활용하였습니다. 중복되는 설명은 생략되는 부분이 있으니 이 파일을 먼저 참고해주세요
 
 key_state = False # 키보드 입력 확인
 change_signal = False # move event 중 change 시 rapaint 호출 위함. 입력 방식 변경 상태 저장

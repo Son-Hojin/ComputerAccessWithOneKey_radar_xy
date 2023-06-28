@@ -1,6 +1,7 @@
 import pyautogui
 import math
 
+# 이전에 작성했던 영어 주석을 그대로 올립니다. 팀원 스터디를 진행하면서 보충할 예정입니다.
 # useful to start with the point (r,0) on the positive X-axis
 def radius_error(x, y, r):
     return abs(x**2 + y**2 - r**2)
