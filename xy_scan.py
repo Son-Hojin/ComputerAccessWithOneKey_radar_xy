@@ -19,8 +19,6 @@ app_name = "mouse_support_xy"
 click_type = 1 # 1은 단일 클릭, 2은 더블 클릭 
 
 
-
-
 key_state = False # 키보드 입력 확인
 
 
@@ -194,41 +192,44 @@ class WindowController(QThread):
     def run(self):
         global key_state, target_x, target_y
         while True:
-            count = 0
-            if self.current_state == 0:
+            count = 0 # 이동 횟수 누적
+            if self.current_state == 0: # 0은 초기 상태
+                #초기상태라면 점 초기화 하고 다음 상태로 변경
                 self.init_point()
                 self.current_state = 1
 
             self.parent.repaint()
 
-            if self.current_state == 1:
+            if self.current_state == 1: # 키 입력 대기
                 self.key_wait()
 
-            key_state = False
+            key_state = False # 키 입력이 들어오면 다시 키 대기 상태로 변경
             # program_to_front()
             
+
             #가로선 움직임
-            first=True
+            
+            first=True #첫 시작 딜레이 수행 점검
             while key_state == False:
                 target_y+=1
                 self.parent.repaint()
-                if first:
+                if first: # 처음 선을 띄우고 대기
                     time.sleep(self.y_delay)
                     first=False
                 else:
                     accurate_delay(self.y_wait)
-                if target_y == self.parent.max_y:
-                    count += 1
-                    target_y = 0
-                if count == self.y_time:
+                if target_y == self.parent.max_y: #모니터 끝에 도달했을 때
+                    count += 1 #횟수 누적 +1
+                    target_y = 0 #y좌표 0으로 초기화
+                if count == self.y_time: #제한 횟수 도달 시 반복문을 나옴
                     break
 
-            if count == self.y_time and key_state != True:
+            if count == self.y_time and key_state != True: # 제한 횟수 다 채우고 키 입력도 없을 때
                 self.current_state = 0 # back to start
-                continue
+                continue #while문의 처음으로 돌아감
             
 
-            self.parent.condition = 1
+            self.parent.condition = 1 # 세로선을 표시하도록 paint 상태 변경
 
             self.key_wait()
             count = 0
@@ -238,19 +239,22 @@ class WindowController(QThread):
             while key_state == False:
                 target_x+=1
                 self.parent.repaint()
-                if first:
+                if first: # 초기 대기
                     time.sleep(self.x_delay)
                     first=False
                 else:
                     accurate_delay(self.x_wait)
-                if target_x == self.parent.max_x:
+                if target_x == self.parent.max_x: #모니터의 오른쪽 끝에 도달했을 때.
                     count += 1
-                    target_y = 0
-                if count == self.x_time:
+                    target_x = 0
+                    
+                if count == self.x_time: #세로선 이동 제한 완료
                     break
             
-            if count == self.x_time and key_state != True: 
-                self.current_state = 2 #back to spin , 2 is nothing
+            if count == self.x_time and key_state != True: #이전 단계(가로선 이동)로 이동
+                self.current_state = 2 #가로선으로 이동 2는 0과 1이 아닌 숫자.
+                target_y = 0 # 없으면 기존 위치에서 시작
+                self.parent.condition = 0
                 continue
             
             x = target_x
