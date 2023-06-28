@@ -11,7 +11,7 @@ import pyautogui
 import threading
 import sys
 import win32gui
-
+#최종 파일. 주석 확인
 pyautogui.FAILSAFE = False
  
 app_name = "mouse_support_rotate"
