@@ -176,11 +176,33 @@ def program_to_front():#미사용
     for i in top_windows:
         if app_name in i[1].lower():
             try:
-                win32gui.ShowWindow(i[0], 5)
+                win32gui.ShowWindow(i[0], 8) #5 is front
                 win32gui.SetForegroundWindow(i[0])
+                print("makefront")
                 break
             except:
                 break
+
+def keyboard_to_back():
+    
+    top_windows = []
+    win32gui.EnumWindows(windowEnumerationHandler, top_windows)
+    for i in top_windows:
+        # 제어판
+        # wordform
+        # virtual keyboard
+        # hardwaremonitorwindow
+        
+        if "virtual keyboard" in i[1].lower():
+            try:
+                print("find")
+                win32gui.ShowWindow(i[0], 8) #5 is front
+                win32gui.SetForegroundWindow(i[0])
+                
+                break
+            except:
+                break
+
 
 # paint 값과 타이밍을 조절하는 컨트롤러 쓰레드
 class WindowController(QThread):
@@ -239,6 +261,7 @@ class WindowController(QThread):
         global change_signal
         while True:
             # program_to_front()
+            keyboard_to_back()
             count = 0
             if self.current_state == 0: #초기 상태일 때
                 self.init_point()
@@ -319,6 +342,7 @@ class WindowController(QThread):
 
             key_state = False
             # program_to_front()
+            keyboard_to_back()
             self.current_state = 0 # successfull execution
         
 listener = key_listener()
@@ -340,3 +364,4 @@ window.showFullScreen()
 
 app.setOverrideCursor(Qt.PointingHandCursor)
 sys.exit(app.exec())
+
