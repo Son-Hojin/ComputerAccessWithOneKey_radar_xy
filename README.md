@@ -1,7 +1,8 @@
 # ComputerAccessWithOneKey_radar_xy
 
 Python version: 3.8.10<br>
-그 외 라이브러리 버전은 requirements.txt 파일에 있습니다.
+그 외 라이브러리 버전은 requirements.txt 파일에 있습니다.<br>
+.exe 파일 생성)<br>> pyinstaller -w -F --icon=./icon/rotate.ico rotate_scan.py<br>> pyinstaller -w -F --icon=./icon/xy.ico xy_scan.py 
 
 <h3>업로드 파일 설명</h3>
 <ul>
