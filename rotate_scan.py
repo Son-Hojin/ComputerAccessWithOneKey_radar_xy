@@ -10,7 +10,8 @@ import time
 import pyautogui
 import threading
 import sys
-import win32gui #창 열람 방식이 바뀌어서 사용하지 않습니다. 이후 코드를 정리하면서 삭제할 예정입니다.
+import win32gui 
+from win32con import HWND_NOTOPMOST, SWP_NOSIZE, SWP_NOMOVE
 
 pyautogui.FAILSAFE = False
  
@@ -166,22 +167,18 @@ def accurate_delay(delay):
     while time.perf_counter() < t:
         pass
 
-def windowEnumerationHandler(hwnd, top_windows):#미사용
+def windowEnumerationHandler(hwnd, top_windows):
     top_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
 
-def program_to_front():#미사용
+def program_to_front(): # 실행중인 TOPMOST 프로그램 설정 변경
     
     top_windows = []
     win32gui.EnumWindows(windowEnumerationHandler, top_windows)
     for i in top_windows:
-        if app_name in i[1].lower():
-            try:
-                win32gui.ShowWindow(i[0], 8) #5 is front
-                win32gui.SetForegroundWindow(i[0])
-                print("makefront")
-                break
-            except:
-                break
+        if "virtual keyboard" in i[1].lower():
+            win32gui.SetWindowPos(i[0], HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+            
+              
 
 def keyboard_to_back():
     
@@ -259,9 +256,10 @@ class WindowController(QThread):
     def run(self): #전체 동작 관리
         global key_state, start_x, start_y, end_x, end_y
         global change_signal
+
         while True:
             # program_to_front()
-            keyboard_to_back()
+            # keyboard_to_back()
             count = 0
             if self.current_state == 0: #초기 상태일 때
                 self.init_point()
@@ -342,7 +340,7 @@ class WindowController(QThread):
 
             key_state = False
             # program_to_front()
-            keyboard_to_back()
+            # keyboard_to_back()
             self.current_state = 0 # successfull execution
         
 listener = key_listener()
@@ -361,7 +359,7 @@ window.setAttribute(Qt.WA_NoSystemBackground, True)
 window.setAttribute(Qt.WA_TranslucentBackground, True)
 
 window.showFullScreen()
-
+program_to_front()
 app.setOverrideCursor(Qt.PointingHandCursor)
 sys.exit(app.exec())
 
