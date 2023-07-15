@@ -261,7 +261,8 @@ class WindowController(QThread):
         global change_signal
         while True:
             # program_to_front()
-            keyboard_to_back()
+            # keyboard_to_back()
+            
             count = 0
             if self.current_state == 0: #초기 상태일 때
                 self.init_point()
@@ -357,6 +358,7 @@ window = DisplayWindow()
 
 #WindowStaysOnTopHint -> win32gui 창 전환 불필요. 화상 키보드 아래에 배치
 window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+# window.setWindowState(window.windowState() & ~Qt.WindowMinimized)
 window.setAttribute(Qt.WA_NoSystemBackground, True)
 window.setAttribute(Qt.WA_TranslucentBackground, True)
 
