@@ -10,6 +10,7 @@ import pyautogui
 import threading
 import sys
 import win32gui
+from win32con import HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE
 
 pyautogui.FAILSAFE = False
  
@@ -144,15 +145,47 @@ def accurate_delay(delay):
 def windowEnumerationHandler(hwnd, top_windows):
     top_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
 
-def program_to_front():
+keyboard_HWND = None
+
+def program_to_front(): # 실행중인 TOPMOST 프로그램 설정 변경
+    global keyboard_HWND
+
+    top_windows = []
+    win32gui.EnumWindows(windowEnumerationHandler, top_windows)
+    if keyboard_HWND is None:
+        for i in top_windows:
+            if "virtual keyboard" in i[1].lower():
+                keyboard_HWND = i[0]        
+                pass
+            # elif app_name in i[1].lower():
+            #     app_HWND = i[0]
+    else:
+        try:
+            win32gui.SetWindowPos(keyboard_HWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+            win32gui.SetWindowPos(keyboard_HWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+            # win32gui.SetWindowPos(app_HWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+        except:
+            keyboard_HWND = None # 중간에 키보드를 종료했을 때.
     
+
+
+def keyboard_to_back():
+    global keyboard_HWND
     top_windows = []
     win32gui.EnumWindows(windowEnumerationHandler, top_windows)
     for i in top_windows:
-        if app_name in i[1].lower():
+        # 제어판
+        # wordform
+        # virtual keyboard
+        # hardwaremonitorwindow
+        
+        if "virtual keyboard" in i[1].lower():
             try:
-                win32gui.ShowWindow(i[0], 5)
-                win32gui.SetForegroundWindow(i[0])
+                # print("find")
+                # win32gui.ShowWindow(i[0], 8) #5 is front
+                # win32gui.SetForegroundWindow(i[0])
+                keyboard_HWND = i[0]
+                win32gui.SetWindowPos(keyboard_HWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
                 break
             except:
                 break
@@ -264,9 +297,10 @@ class WindowController(QThread):
             self.parent.repaint() 
             click(x, y)
             
+            program_to_front()
 
             key_state = False
-            # program_to_front()
+            
             self.current_state = 0 # successful execution
             self.parent.condition = 0
         
@@ -286,6 +320,6 @@ window.setAttribute(Qt.WA_TranslucentBackground, True)
 
 window.showFullScreen()
 
-
+keyboard_to_back()
 
 sys.exit(app.exec())

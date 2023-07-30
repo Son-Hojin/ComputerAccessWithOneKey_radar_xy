@@ -11,7 +11,7 @@ import pyautogui
 import threading
 import sys
 import win32gui 
-from win32con import HWND_NOTOPMOST, SWP_NOSIZE, SWP_NOMOVE
+from win32con import HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE
 
 pyautogui.FAILSAFE = False
  
@@ -170,18 +170,34 @@ def accurate_delay(delay):
 def windowEnumerationHandler(hwnd, top_windows):
     top_windows.append((hwnd, win32gui.GetWindowText(hwnd)))
 
+
+keyboard_HWND = None
+# app_HWND = None
+
 def program_to_front(): # 실행중인 TOPMOST 프로그램 설정 변경
-    
+    global keyboard_HWND
+
     top_windows = []
     win32gui.EnumWindows(windowEnumerationHandler, top_windows)
-    for i in top_windows:
-        if "virtual keyboard" in i[1].lower():
-            win32gui.SetWindowPos(i[0], HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
-            
-              
+    if keyboard_HWND is None:
+        for i in top_windows:
+            if "virtual keyboard" in i[1].lower():
+                keyboard_HWND = i[0]        
+                pass
+            # elif app_name in i[1].lower():
+            #     app_HWND = i[0]
+    else:
+        try:
+            win32gui.SetWindowPos(keyboard_HWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+            win32gui.SetWindowPos(keyboard_HWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+            # win32gui.SetWindowPos(app_HWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
+        except:
+            keyboard_HWND = None # 중간에 키보드를 종료했을 때.
+    
+
 
 def keyboard_to_back():
-    
+    global keyboard_HWND
     top_windows = []
     win32gui.EnumWindows(windowEnumerationHandler, top_windows)
     for i in top_windows:
@@ -192,13 +208,15 @@ def keyboard_to_back():
         
         if "virtual keyboard" in i[1].lower():
             try:
-                print("find")
-                win32gui.ShowWindow(i[0], 8) #5 is front
-                win32gui.SetForegroundWindow(i[0])
-                
+                # print("find")
+                # win32gui.ShowWindow(i[0], 8) #5 is front
+                # win32gui.SetForegroundWindow(i[0])
+                keyboard_HWND = i[0]
+                win32gui.SetWindowPos(keyboard_HWND, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE)
                 break
             except:
                 break
+    
 
 
 # paint 값과 타이밍을 조절하는 컨트롤러 쓰레드
@@ -258,7 +276,7 @@ class WindowController(QThread):
         global change_signal
 
         while True:
-            # program_to_front()
+            program_to_front()
             # keyboard_to_back()
             count = 0
             if self.current_state == 0: #초기 상태일 때
@@ -360,7 +378,7 @@ window.setAttribute(Qt.WA_NoSystemBackground, True)
 window.setAttribute(Qt.WA_TranslucentBackground, True)
 
 window.showFullScreen()
-program_to_front()
+keyboard_to_back()
 app.setOverrideCursor(Qt.PointingHandCursor)
 sys.exit(app.exec())
 
