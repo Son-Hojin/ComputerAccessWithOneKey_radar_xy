@@ -1,6 +1,6 @@
 from pynput import keyboard
 
-from PyQt5.QtCore import Qt, QPoint, QThread, QSize, QCoreApplication, QSettings
+from PyQt5.QtCore import Qt, QPoint, QThread, QCoreApplication, QSettings
 from PyQt5.QtGui import QPainter, QPen, QIcon, QColor
 from PyQt5.QtWidgets import QMainWindow, QApplication
 
@@ -8,7 +8,6 @@ from pixel_circle import generate_circle_coordinate, radius
 
 import time
 import pyautogui
-import threading
 import sys
 import win32gui 
 from win32con import HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE
@@ -34,10 +33,9 @@ end_y = 0
 settings = QSettings("config.ini", QSettings.IniFormat) #설정파일 값 조회
 
 #키 입력용 쓰레드
-class key_listener(threading.Thread):
+class key_listener():
     
     def __init__(self):
-        threading.Thread.__init__(self)
         
         self.rep_check = False #반복(키를 누르고 있을 때 여러번 입력이 들어가는 것) 방지.
 
@@ -73,6 +71,8 @@ class key_listener(threading.Thread):
         global change_signal
 
         if key == self.end_key: # 보호자 프로그램 종료 키. release 일 때만 적용
+            # keyboard Listener가 종료되었을 때: 프로그램 종료
+            QCoreApplication.instance().quit()
             # Stop listener
             return False
 
@@ -86,20 +86,18 @@ class key_listener(threading.Thread):
         '''
         rep_check를 True로 만든 키인지 검사하는 코드가 없기 때문에
         a를 press한 상태에서 b를 press-release 했을 때 반복 입력이 됨.
-        사용 환경이 별도의 키를 이용한다는 가정 하에 문제가 없다고 판단하여 제외함
+        사용 환경이 별도의 키 스위치를 이용한다는 가정 하에 문제가 없다고 판단하여 제외함
         '''
         self.rep_check = False
         
 
     def run(self):
     
-        with keyboard.Listener(
+        listener = keyboard.Listener(
             on_press=self.on_press,
-            on_release=self.on_release) as listener:
-            
-            listener.join()
-        # keyboard Listener가 종료되었을 때: 프로그램 종료
-        QCoreApplication.instance().quit()
+            on_release=self.on_release)
+               
+        listener.start()
 
 
 def click(x_pos, y_pos):    # 지정 좌표에 클릭 수행
@@ -246,7 +244,7 @@ class WindowController(QThread):
 
     def key_wait(self): # 키 입력 대기. 
         while key_state == False:
-            accurate_delay(0.1)
+            accurate_delay(0.0000001)
             pass
         return
 
@@ -362,8 +360,7 @@ class WindowController(QThread):
             self.current_state = 0 # successfull execution
         
 listener = key_listener()
-listener.daemon = True
-listener.start()
+listener.run()
 
 app = QApplication(sys.argv)
 app.setApplicationDisplayName(app_name)
@@ -379,6 +376,6 @@ window.setAttribute(Qt.WA_TranslucentBackground, True)
 
 window.showFullScreen()
 keyboard_to_back()
-app.setOverrideCursor(Qt.PointingHandCursor)
+app.setOverrideCursor(Qt.PointingHandCursor) #지점스캔에서는 제외. 커서 이동 과정이 더움
 sys.exit(app.exec())
 
