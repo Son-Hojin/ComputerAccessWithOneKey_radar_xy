@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 
 import time
 import pyautogui
-import threading
 import sys
 import win32gui
 from win32con import HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE
@@ -29,55 +28,71 @@ target_y = 0
 settings = QSettings("config.ini", QSettings.IniFormat)
 
 #키 입력용 쓰레드
-class key_listener(threading.Thread):
+class key_listener():
     
     def __init__(self):
-        threading.Thread.__init__(self)
-        self.rep_check = False
-        # 0은 누를 때, 1은 땔 때
-        self.click_state = int(settings.value("LINE/click_state"))
+        
+        self.rep_check = False #반복(키를 누르고 있을 때 여러번 입력이 들어가는 것) 방지.
 
-        self.target_key = getattr(keyboard.Key, settings.value("LINE/target_key"))
-        self.change_key = getattr(keyboard.Key, settings.value("LINE/change_key"))
-        self.end_key = getattr(keyboard.Key, settings.value("LINE/end_key"))
+        # 0은 누를 때, 1은 땔 때
+        self.click_state = int(settings.value("SPIN/click_state"))
+
+        #키 초기화. 
+        self.target_key = getattr(keyboard.Key, settings.value("SPIN/target_key"))
+        self.change_key = getattr(keyboard.Key, settings.value("SPIN/change_key"))
+        self.end_key = getattr(keyboard.Key, settings.value("SPIN/end_key"))
 
     def on_press(self, key):
         global key_state
         global click_type
+        global change_signal
         
-        if self.click_state == 0:
-            if self.rep_check == False:
-                if key == self.target_key:
-                    key_state = True
-                    self.rep_check = True
+        if self.click_state == 0: #press 감지
+            if self.rep_check == False:     # 반복된 입력이 아니고
+                if key == self.target_key:  # 지정한 키 입력일 때
+                    key_state = True        # 입력 상태로 전환하고
+                    self.rep_check = True   # 반복 방지
                     
                 elif key == self.change_key:
-                    click_type = (click_type % 2) + 1
+                    click_type = (click_type % 2) + 1 # 0은 1로, 1은 0으로 전환
+                    change_signal = True
                     self.rep_check = True
+
             
 
     def on_release(self, key):
         global key_state
         global click_type
-        
-        if key == self.end_key:
+        global change_signal
+
+        if key == self.end_key: # 보호자 프로그램 종료 키. release 일 때만 적용
+            # keyboard Listener가 종료되었을 때: 프로그램 종료
+            QCoreApplication.instance().quit()
             # Stop listener
             return False
 
         if self.click_state == 1:
-            if key == self.target_key:
+            if key == self.target_key: # release는 반복 문제가 없기 때문에 지정키 대응만 점검
                 key_state = True
             elif key == self.change_key:
                 click_type = (click_type % 2) + 1
+                change_signal = True
+                
+        '''
+        rep_check를 True로 만든 키인지 검사하는 코드가 없기 때문에
+        a를 press한 상태에서 b를 press-release 했을 때 반복 입력이 됨.
+        사용 환경이 별도의 키 스위치를 이용한다는 가정 하에 문제가 없다고 판단하여 제외함
+        '''
         self.rep_check = False
         
 
     def run(self):
-        with keyboard.Listener(
+    
+        listener = keyboard.Listener(
             on_press=self.on_press,
-            on_release=self.on_release) as listener:
-            listener.join()
-        QCoreApplication.instance().quit()
+            on_release=self.on_release)
+               
+        listener.start()
 
 
 def click(x_pos, y_pos):
@@ -211,7 +226,7 @@ class WindowController(QThread):
 
     def key_wait(self):
         while key_state == False:
-            accurate_delay(0.1)
+            accurate_delay(0.0000001)
             pass
         return
  
@@ -306,8 +321,7 @@ class WindowController(QThread):
         
 
 listener = key_listener()
-listener.daemon = True
-listener.start()
+listener.run()
 
 app = QApplication(sys.argv)
 app.setApplicationDisplayName(app_name)
